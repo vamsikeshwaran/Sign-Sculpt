@@ -7,3 +7,5 @@ This application enables the generation of sign language from video content, enr
 ## Schematic view of solution
 ![Screenshot](images/videotosign.jpeg)
 ![Screenshot](images/signtotext.jpeg)
+
+vamsi
