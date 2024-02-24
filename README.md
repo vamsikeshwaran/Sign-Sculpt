@@ -5,7 +5,9 @@ This application enables the generation of sign language from video content, enr
 
 
 ## Schematic view of solution
+### Video to Sign Language
 ![Screenshot](images/videotosign.jpeg)
+
+### Sign Language Chatbot
 ![Screenshot](images/signtotext.jpeg)
 
-vamsi
