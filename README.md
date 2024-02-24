@@ -52,10 +52,7 @@ cd ../app
 ```
 flutter run
 ```
-## Sample Outputs 
 
-### Sign Language Chatbot
-![Screenshot](images/signbot.jpeg)
 
 
 
