@@ -54,7 +54,7 @@ flutter run
 ```
 ## Demo Video 
 
-link: https://www.youtube.com/watch?v=Nx0LDM5VT4M
+link: 
 
 
 
