@@ -1,10 +1,8 @@
-import 'package:app/chatbot_camera.dart';
 import 'package:app/sign_talk_camera.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:video_player/video_player.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 enum DisplayMode { none, textToSign, signToText }
 
@@ -25,14 +23,18 @@ class _ChatBotState extends State<SignTalk> {
   bool videoPlayer = false;
   late VideoPlayerController _controller;
   late Future<void> _initializeVideoPlayerFuture;
+  late VideoPlayerController _controller1;
+  late Future<void> _initializeVideoPlayerFuture1;
 
   final TextEditingController _textcontroller = TextEditingController();
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
 
-  void _sendMessage() async {
-    text2sign = _textcontroller.text;
+  void _sendMessage(String text) async {
+    text2sign = text;
     _textcontroller.clear();
     final url =
-        'https://5980-2409-40f4-17-349e-c4bc-a78-2da2-d840.ngrok-free.app/sign?text=$text2sign';
+        'https://6338-2409-408d-782-717-19a5-6f77-95e4-866.ngrok-free.app/sign?text=$text2sign';
 
     setState(() {
       responseLoader = true;
@@ -47,6 +49,7 @@ class _ChatBotState extends State<SignTalk> {
 
         if (response.body.contains('"message"')) {
           setState(() {
+            _initVideoController1();
             displayMode = DisplayMode.textToSign;
           });
         }
@@ -62,18 +65,36 @@ class _ChatBotState extends State<SignTalk> {
     }
   }
 
-  @override
-  void initState() {
+  void _initVideoController1() {
     _controller = VideoPlayerController.networkUrl(Uri.parse(
         "https://firebasestorage.googleapis.com/v0/b/htmlapp-fa3bc.appspot.com/o/video.mp4?alt=media&token=e2aeeffe-e2ad-4640-8f2b-a3ca60abfbbb"));
     _initializeVideoPlayerFuture = _controller.initialize();
+    initializeVideoPlayerFuture.then(() {
+      setState(() {});
+    });
+  }
 
+  void _initVideoController2() {
+    _controller1 = VideoPlayerController.networkUrl(Uri.parse(
+        "https://firebasestorage.googleapis.com/v0/b/sign-app-d3980.appspot.com/o/videos%2Fsample.mp4?alt=media&token=03ea3cc5-17cd-466f-a4e0-366ac3ee318e"));
+    _initializeVideoPlayerFuture1 = _controller1.initialize();
+    initializeVideoPlayerFuture.then(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void initState() {
     super.initState();
+    _speech = stt.SpeechToText();
+    _initVideoController1();
+    _initVideoController2();
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _controller1.dispose();
     super.dispose();
   }
 
@@ -91,20 +112,27 @@ class _ChatBotState extends State<SignTalk> {
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              FutureBuilder(
-                future: _initializeVideoPlayerFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done) {
-                    return AspectRatio(
-                      aspectRatio: _controller.value.aspectRatio,
-                      child: VideoPlayer(_controller),
-                    );
-                  } else {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-                },
+              Container(
+                height: 250,
+                width: 250,
+                child: FutureBuilder(
+                  future: _initializeVideoPlayerFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      return AspectRatio(
+                        aspectRatio: _controller.value.aspectRatio,
+                        child: VideoPlayer(
+                          _controller,
+                          key: UniqueKey(),
+                        ),
+                      );
+                    } else {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+                  },
+                ),
               ),
               // Add FloatingActionButton for video playback control
               const SizedBox(
@@ -132,28 +160,71 @@ class _ChatBotState extends State<SignTalk> {
   }
 
   Widget signToText() {
+    _initVideoController2();
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Generated Text",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+          Center(
+            child: Container(
+              height: 250,
+              width: 250,
+              child: FutureBuilder(
+                future: _initializeVideoPlayerFuture1,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    return AspectRatio(
+                      aspectRatio: _controller.value.aspectRatio,
+                      child: VideoPlayer(
+                        _controller1,
+                        key: UniqueKey(),
+                      ),
+                    );
+                  } else {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+                },
+              ),
+            ),
           ),
+          // Add FloatingActionButton for video playback control
+          const SizedBox(
+            height: 10,
+          ),
+          Center(
+            child: FloatingActionButton(
+              onPressed: () {
+                setState(() {
+                  if (_controller.value.isPlaying) {
+                    _controller1.pause();
+                  } else {
+                    _controller1.play();
+                  }
+                });
+              },
+              child: Icon(
+                _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+              ),
+            ),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+
           const SizedBox(
             height: 8,
           ),
-          Row(
-            children: [
-              Text(
-                sign2text,
-                style: TextStyle(fontSize: 20),
-              ),
-              const SizedBox(
-                width: 5,
-              ),
-            ],
+          Center(
+            child: Text(
+              sign2text,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(
+            width: 5,
           ),
         ],
       ),
@@ -164,6 +235,34 @@ class _ChatBotState extends State<SignTalk> {
     setState(() {
       displayMode = DisplayMode.signToText;
     });
+  }
+
+  void _listen() async {
+    if (!_isListening) {
+      bool available = await _speech.initialize(
+        onStatus: (val) => print('onStatus: $val'),
+        onError: (val) => print('onError: $val'),
+      );
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (val) {
+            setState(() {
+              text2sign = val.recognizedWords;
+            });
+          },
+        );
+      }
+    } else {
+      setState(() {
+        _isListening = false;
+        _speech.stop();
+        _sendMessage(text2sign);
+      });
+
+      // _sendMessage(text2sign);
+      // Call sendMessage() after stopping speech recognition
+    }
   }
 
   @override
@@ -205,7 +304,8 @@ class _ChatBotState extends State<SignTalk> {
                       Expanded(
                         child: TextField(
                           controller: _textcontroller,
-                          onSubmitted: (_) => _sendMessage(),
+                          onSubmitted: (_) =>
+                              _sendMessage(_textcontroller.text),
                           cursorColor: Colors.black,
                           decoration: const InputDecoration(
                             hintText: "Say anything...",
@@ -216,15 +316,17 @@ class _ChatBotState extends State<SignTalk> {
                         ),
                       ),
                       IconButton(
-                        onPressed: _sendMessage,
+                        onPressed: () {
+                          _sendMessage(_textcontroller.text);
+                        },
                         icon: const Icon(Icons.send),
                       ),
                       const SizedBox(
                         width: 6,
                       ),
                       IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.mic),
+                        onPressed: _listen,
+                        icon: Icon(_isListening ? Icons.upload : Icons.mic),
                       ),
                       const SizedBox(
                         width: 10,
