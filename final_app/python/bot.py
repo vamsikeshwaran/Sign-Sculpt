@@ -15,18 +15,16 @@ import tempfile
 from firebase_admin import credentials, initialize_app, storage
 
 
-# Initialize Flask app
 app = Flask(__name__)
 
 cred = credentials.Certificate(
     "D:/final/final_app/python/serviceAcc.json")
 initialize_app(cred, {"storageBucket": "htmlapp-fa3bc.appspot.com"})
 bucket = storage.bucket()
-# Global variables
-mp_holistic = mp.solutions.holistic  # Holistic model
+mp_holistic = mp.solutions.holistic
 mp_drawing = mp.solutions.drawing_utils
-model = None  # Placeholder for your model
-actions = None  # Placeholder for your actions
+model = None
+actions = None
 
 actions = np.array(['hello', 'thankyou'])
 
@@ -90,17 +88,15 @@ def generate_video(extracted_text, assets_folder):
 
 
 def mediapipe_detection(image, model):
-    # COLOR CONVERSION BGR 2 RGB
+
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image.flags.writeable = False  # Image is no longer writeable
-    results = model.process(image)  # Make prediction
-    image.flags.writeable = True  # Image is now writeable
-    # COLOR CONVERSION RGB 2 BGR
+    image.flags.writeable = False
+    results = model.process(image)
+    image.flags.writeable = True
+
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
     return image, results
-
-# Define a route
 
 
 @app.route('/bot', methods=['GET'])
@@ -124,10 +120,8 @@ def chat():
             image, results = mediapipe_detection(frame, holistic)
             print(results)
 
-            # Draw landmarks
             draw_styled_landmarks(image, results)
 
-            # 2. Prediction logic
             keypoints = extract_keypoints(results)
             sequence.append(keypoints)
             sequence = sequence[-30:]
@@ -148,19 +142,13 @@ def chat():
                 if len(sentence) > 5:
                     sentence = sentence[-5:]
 
-                # Viz probabilities
                 cv2.rectangle(image, (0, 0), (640, 40), (245, 117, 16), -1)
                 cv2.putText(image, ' '.join(sentence), (3, 30),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
-            # Show to screen
-            # cv2.imshow('OpenCV Feed', image)
-
-            # Break gracefully
             key = cv2.waitKey(10)
-            if key == ord('q') or key == 27:  # Check for 'q' key or ESC key
+            if key == ord('q') or key == 27:
                 break
-
 
     cap.release()
     cv2.destroyAllWindows()
